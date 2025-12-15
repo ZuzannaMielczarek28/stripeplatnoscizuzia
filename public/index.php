@@ -15,18 +15,22 @@
 <label>Opis:</label><br>
 <input type="text" id="description" value="Testowa płatność"><br><br>
 
-<button id="pay">Zapłać</button>
+<button id="start-payment">Zapłać</button>
 
 <hr>
 
-<div id="payment-element"></div>
-<div id="message"></div>
+<div id="payment-section" style="display:none;">
+    <div id="payment-element"></div><br>
+    <button id="confirm-payment">Potwierdź płatność</button>
+</div>
+
+<p id="message"></p>
 
 <script>
 const stripe = Stripe("<?= getenv('STRIPE_PUBLISHABLE_KEY') ?>");
+let elements;
 
-document.getElementById('pay').addEventListener('click', async () => {
-
+document.getElementById('start-payment').addEventListener('click', async () => {
     const amount = document.getElementById('amount').value;
     const description = document.getElementById('description').value;
 
@@ -43,13 +47,15 @@ document.getElementById('pay').addEventListener('click', async () => {
         return;
     }
 
-    const elements = stripe.elements({
-        clientSecret: data.clientSecret
-    });
+    elements = stripe.elements({ clientSecret: data.clientSecret });
 
     const paymentElement = elements.create('payment');
     paymentElement.mount('#payment-element');
 
+    document.getElementById('payment-section').style.display = 'block';
+});
+
+document.getElementById('confirm-payment').addEventListener('click', async () => {
     const { error } = await stripe.confirmPayment({
         elements,
         confirmParams: {
